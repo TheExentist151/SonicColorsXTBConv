@@ -1,4 +1,4 @@
-# SonicColorsXTBConverter
+# SonicColorsXTBConv
 
 ## Description
 This tool converts Sonic Colors' XTB files to XML and vice versa.

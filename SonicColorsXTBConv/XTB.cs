@@ -1,6 +1,7 @@
 using System.Xml;
 using System.Text;
 using System.IO;
+
 namespace SonicColorsXTBConv
 {
     public static class XTB
@@ -18,8 +19,8 @@ namespace SonicColorsXTBConv
             Encoding Unicode = Encoding.GetEncoding("Unicode");
             Encoding UTF8Encoding = Encoding.GetEncoding("UTF-8");
 
-            binaryReader.ReadInt64();   // Seems like always 0xFFFFFFFF
-            binaryReader.ReadUInt16();  // Seems like always 0x02
+            binaryReader.ReadInt64();   // Seems like it's always 0xFFFFFFFF
+            binaryReader.ReadUInt16();  // Seems like it's always 0x02
             long stylesCount = binaryReader.ReadInt64();
 
             List<Style> styles = new List<Style>();
@@ -91,6 +92,8 @@ namespace SonicColorsXTBConv
                 // Adding the category in the categories list
                 categories.Add(categoryData);
             }
+			
+	    binaryReader.Close();
 
             // ==================================================================================
             // Writing XML File
@@ -153,6 +156,8 @@ namespace SonicColorsXTBConv
 
             writer.WriteEndElement();
             writer.WriteEndDocument();
+			
+	    writer.Close();
             
             return;
         }
@@ -160,6 +165,7 @@ namespace SonicColorsXTBConv
         public static void XMLtoXTB(string path)
         {
             string filePath = Path.GetDirectoryName(path) + "\\" + Path.GetFileNameWithoutExtension(path);
+			
             // ==================================================================================
             // Reading XML File
 
@@ -244,73 +250,72 @@ namespace SonicColorsXTBConv
 
             Encoder UTF16 = Encoding.Unicode.GetEncoder();
 
-            using (BinaryWriter binaryWriter = new BinaryWriter(File.Open(filePath + ".xtb", FileMode.OpenOrCreate)))
+            BinaryWriter binaryWriter = new BinaryWriter(File.Open(filePath + ".xtb", FileMode.OpenOrCreate));
+            
+            // Writing first 10 bytes
+            binaryWriter.Write(0xFFFFFFFFFFFFFFFF);
+            binaryWriter.Write((short)0x0002);
+
+            binaryWriter.Write((long)styles.Count);
+
+            // Styles
+            for(int i = 0; i < styles.Count; i++)
             {
-                // TODO: эндиан-свап
-                // Writing first 10 bytes
-                binaryWriter.Write(0xFFFFFFFFFFFFFFFF);
-                binaryWriter.Write((short)0x0002);
+                // Style's name 
+                // When we're writing style's name, the first byte is name's length, so we don't need
+                // this line
+                // binaryWriter.Write(Convert.ToByte(styles[i].StyleName.Length));
+                binaryWriter.Write(styles[i].StyleName);
 
-                binaryWriter.Write((long)styles.Count);
+                // 01 byte
+                binaryWriter.Write((byte)1);
 
-                // Styles
-                for(int i = 0; i < styles.Count; i++)
+                // Style's size
+                binaryWriter.Write(styles[i].Size);
+
+                // Style's colors
+                // R
+                binaryWriter.Write((byte)styles[i].ColorR);
+                // G
+                binaryWriter.Write((byte)styles[i].ColorG);
+                // B
+                binaryWriter.Write((byte)styles[i].ColorB);
+
+                // Style's horizontal alignment
+                binaryWriter.Write(Convert.ToInt16(styles[i].HorizontalAlignment));
+            }
+
+            // Categories
+            binaryWriter.Write((long)1);
+            for(int i = 0; i < categories.Count; i++)
+            {
+                // Name
+                binaryWriter.Write(categories[i].CategoryName);
+
+                // Cells count
+                binaryWriter.Write((byte)categories[i].CellList.Count);
+
+                for(int i2 = 0; i2 < categories[i].CellList.Count; i2++)
                 {
-                    // Style's name 
-                    // When we're writing style's name, the first byte is name's length, so we don't need
-                    // this line
-                    // binaryWriter.Write(Convert.ToByte(styles[i].StyleName.Length));
-                    binaryWriter.Write(styles[i].StyleName);
+                    // Cell's name
+                    binaryWriter.Write(categories[i].CellList[i2].CellName);
 
-                    // 01 byte
-                    binaryWriter.Write((byte)1);
+                    // Cell's style
+                    binaryWriter.Write(categories[i].CellList[i2].CellStyleID);
 
-                    // Style's size
-                    binaryWriter.Write(styles[i].Size);
+                    // Cells text data length multiplied by 2
+                    binaryWriter.Write(categories[i].CellList[i2].CellTextData.Replace("$n", "\n").Length * 2);
 
-                    // Style's colors
-                    // R
-                    binaryWriter.Write((byte)styles[i].ColorR);
-                    // G
-                    binaryWriter.Write((byte)styles[i].ColorG);
-                    // B
-                    binaryWriter.Write((byte)styles[i].ColorB);
+                    // Actual cell's text data length
+                    binaryWriter.Write(categories[i].CellList[i2].CellTextData.Replace("$n", "\n").Length);
 
-                    // Style's horizontal alignment
-                    binaryWriter.Write(Convert.ToInt16(styles[i].HorizontalAlignment));
-                }
-
-                // Categories
-                binaryWriter.Write((long)1);
-                for(int i = 0; i < categories.Count; i++)
-                {
-                    // Name
-                    binaryWriter.Write(categories[i].CategoryName);
-
-                    // Cells count
-                    binaryWriter.Write((byte)categories[i].CellList.Count);
-
-                    for(int i2 = 0; i2 < categories[i].CellList.Count; i2++)
-                    {
-                        // Cell's name
-                        binaryWriter.Write(categories[i].CellList[i2].CellName);
-
-                        // Cell's style
-                        binaryWriter.Write(categories[i].CellList[i2].CellStyleID);
-
-                        // Cells text data length multiplied by 2
-                        binaryWriter.Write(categories[i].CellList[i2].CellTextData.Replace("$n", "\n").Length * 2);
-
-                        // Actual cell's text data length
-                        binaryWriter.Write(categories[i].CellList[i2].CellTextData.Replace("$n", "\n").Length);
-
-                        // Cell's text data
-                        byte[] message = new byte[categories[i].CellList[i2].CellTextData.Replace("$n", "\n").Length * 2];
-                        UTF16.GetBytes(categories[i].CellList[i2].CellTextData.Replace("$n", "\n"), message, true);
-                        binaryWriter.Write(message);
-                    }
+                    // Cell's text data
+                    byte[] message = new byte[categories[i].CellList[i2].CellTextData.Replace("$n", "\n").Length * 2];
+                    UTF16.GetBytes(categories[i].CellList[i2].CellTextData.Replace("$n", "\n"), message, true);
+                    binaryWriter.Write(message);
                 }
             }
+	    binaryWriter.Close();
             return;
         }
 

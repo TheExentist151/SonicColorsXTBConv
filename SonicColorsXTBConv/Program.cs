@@ -6,7 +6,7 @@
         {
             if(args.Length == 0)
             {
-                Console.WriteLine("SonicColorsXTBConv v1.1\nUsage: SonicColorsXTBConv <source file>");
+                Console.WriteLine("SonicColorsXTBConv v1.2\nUsage: SonicColorsXTBConv <source file>");
                 return;
             }
             else

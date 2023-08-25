@@ -286,7 +286,7 @@ namespace SonicColorsXTBConv
             }
 
             // Categories
-            binaryWriter.Write((long)1);
+            binaryWriter.Write((long)categories.Count);
             for(int i = 0; i < categories.Count; i++)
             {
                 // Name

@@ -54,12 +54,15 @@ namespace SonicColorsXTBConv.XTB
                     Data += encoding.GetString(character);
                 }
             }
-            List<byte> tempBuf = new List<byte>();
-            for (int i = 0; i < unicodeCharsCount; i++)
+            else
             {
-                tempBuf.Add(reader.ReadByte());
+                List<byte> tempBuf = new List<byte>();
+                for (int i = 0; i < unicodeCharsCount; i++)
+                {
+                    tempBuf.Add(reader.ReadByte());
+                }
+                Data = encoding.GetString(tempBuf.ToArray());
             }
-            Data = encoding.GetString(tempBuf.ToArray());
         }
 
         public void Write(BinaryValueWriter writer, Version version)

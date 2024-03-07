@@ -15,7 +15,7 @@ namespace SonicColorsXTBConv
 
             if (args.Length == 0)
             {
-                Console.WriteLine("SonicColorsXTBConv 2.0\nUsage: SonicColorsXTBConv.exe <input file> <format version> (or you can just drag and drop a file)" +
+                Console.WriteLine("SonicColorsXTBConv 2.1\nUsage: SonicColorsXTBConv.exe <input file> <format version> (or you can just drag and drop a file)" +
                     "\n\nFormat versions:" + "\n" + formatMessage);
                 return;
             }
